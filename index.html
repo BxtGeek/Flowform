@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Flowform - Wallpaper Generator</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Inter,sans-serif;
+height:100vh;
+display:flex;
+background:#111;
+color:white;
+overflow:hidden;
+}
+
+.sidebar{
+width:320px;
+background:#171717;
+padding:20px;
+overflow:auto;
+border-right:1px solid #333;
+}
+
+.logo{
+font-size:28px;
+font-weight:700;
+margin-bottom:20px;
+}
+
+.control{
+margin-bottom:18px;
+}
+
+label{
+display:block;
+font-size:13px;
+margin-bottom:8px;
+opacity:.8;
+}
+
+input[type=range],
+select,
+input[type=color]{
+width:100%;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+cursor:pointer;
+margin-top:10px;
+background:white;
+color:black;
+font-weight:600;
+border-radius:8px;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.canvas{
+flex:1;
+position:relative;
+}
+
+svg{
+width:100%;
+height:100%;
+display:block;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div class="logo">Flowform</div>
+
+<div class="control">
+<label>Preset</label>
+<select id="preset">
+<option value="4k">4K UHD (3840×2160)</option>
+<option value="phone">Phone (1440×3120)</option>
+<option value="tablet">Tablet (2048×2732)</option>
+</select>
+</div>
+
+<div class="control">
+<label>Lines</label>
+<input id="lines" type="range" min="5" max="100" value="40">
+</div>
+
+<div class="control">
+<label>Amplitude</label>
+<input id="amp" type="range" min="0" max="300" value="80">
+</div>
+
+<div class="control">
+<label>Frequency</label>
+<input id="freq" type="range" min="1" max="20" value="6">
+</div>
+
+<div class="control">
+<label>Stroke Width</label>
+<input id="stroke" type="range" min="1" max="20" value="3">
+</div>
+
+<div class="control">
+<label>Direction</label>
+<select id="direction">
+<option value="0">Horizontal</option>
+<option value="90">Vertical</option>
+<option value="35">Diagonal</option>
+</select>
+</div>
+
+<div class="control">
+<label>Style</label>
+<select id="style">
+<option value="stroke">Stroke</option>
+<option value="ribbon">Ribbon</option>
+</select>
+</div>
+
+<div class="control">
+<label>Line Color</label>
+<input id="lineColor" type="color" value="#ffffff">
+</div>
+
+<div class="control">
+<label>Background</label>
+<input id="bgColor" type="color" value="#000000">
+</div>
+
+<button id="randomize">
+Randomize
+</button>
+
+<button id="downloadSVG">
+Export SVG
+</button>
+
+<button id="downloadPNG">
+Export PNG
+</button>
+
+</div>
+
+<div class="canvas">
+<svg id="svg"></svg>
+</div>
+
+<script>
+
+const svg=document.getElementById("svg");
+
+const controls={
+lines:document.getElementById("lines"),
+amp:document.getElementById("amp"),
+freq:document.getElementById("freq"),
+stroke:document.getElementById("stroke"),
+direction:document.getElementById("direction"),
+style:document.getElementById("style"),
+lineColor:document.getElementById("lineColor"),
+bgColor:document.getElementById("bgColor"),
+preset:document.getElementById("preset")
+};
+
+function getResolution(){
+
+switch(controls.preset.value){
+
+case "4k":
+return {w:3840,h:2160};
+
+case "phone":
+return {w:1440,h:3120};
+
+case "tablet":
+return {w:2048,h:2732};
+}
+
+}
+
+function waveY(x,y,amp,freq){
+
+return y +
+Math.sin(
+x*0.002*freq
+)*amp +
+
+Math.cos(
+x*0.0015
+)*amp*0.3;
+
+}
+
+function createPath(y){
+
+const {w}=getResolution();
+
+const amp=
++controls.amp.value;
+
+const freq=
++controls.freq.value;
+
+let d=`M 0 ${waveY(0,y,amp,freq)}`;
+
+for(let x=0;x<=w;x+=20){
+
+d+=` L ${x} ${waveY(x,y,amp,freq)}`;
+
+}
+
+return d;
+
+}
+
+function createRibbon(y){
+
+const {w}=getResolution();
+
+const amp=
++controls.amp.value;
+
+const freq=
++controls.freq.value;
+
+const thickness=
++controls.stroke.value*4;
+
+let upper=[];
+let lower=[];
+
+for(let x=0;x<=w;x+=20){
+
+let yy=
+waveY(x,y,amp,freq);
+
+upper.push(`${x},${yy}`);
+
+lower.unshift(
+`${x},${yy+thickness}`
+);
+
+}
+
+return [...upper,...lower].join(" ");
+}
+
+function draw(){
+
+const {w,h}=getResolution();
+
+svg.innerHTML="";
+
+svg.setAttribute(
+"viewBox",
+`0 0 ${w} ${h}`
+);
+
+svg.style.background=
+controls.bgColor.value;
+
+const count=
++controls.lines.value;
+
+const spacing=
+h/count;
+
+for(let i=0;i<count;i++){
+
+let y=i*spacing;
+
+if(
+controls.style.value==="stroke"
+){
+
+const path=
+document.createElementNS(
+"http://www.w3.org/2000/svg",
+"path"
+);
+
+path.setAttribute(
+"d",
+createPath(y)
+);
+
+path.setAttribute(
+"fill",
+"none"
+);
+
+path.setAttribute(
+"stroke",
+controls.lineColor.value
+);
+
+path.setAttribute(
+"stroke-width",
+controls.stroke.value
+);
+
+svg.appendChild(path);
+
+}else{
+
+const poly=
+document.createElementNS(
+"http://www.w3.org/2000/svg",
+"polygon"
+);
+
+poly.setAttribute(
+"points",
+createRibbon(y)
+);
+
+poly.setAttribute(
+"fill",
+controls.lineColor.value
+);
+
+svg.appendChild(poly);
+
+}
+
+}
+
+svg.style.transform=
+`rotate(${controls.direction.value}deg)`;
+
+}
+
+function randomize(){
+
+controls.lines.value=
+Math.floor(
+Math.random()*60
+)+20;
+
+controls.amp.value=
+Math.floor(
+Math.random()*200
+)+30;
+
+controls.freq.value=
+Math.floor(
+Math.random()*10
+)+2;
+
+controls.stroke.value=
+Math.floor(
+Math.random()*6
+)+2;
+
+draw();
+
+}
+
+function exportSVG(){
+
+const serializer=
+new XMLSerializer();
+
+const source=
+serializer.serializeToString(svg);
+
+const blob=
+new Blob(
+[source],
+{
+type:"image/svg+xml"
+}
+);
+
+const url=
+URL.createObjectURL(blob);
+
+const a=
+document.createElement("a");
+
+a.href=url;
+a.download="flowform.svg";
+a.click();
+
+URL.revokeObjectURL(url);
+
+}
+
+function exportPNG(){
+
+const serializer=
+new XMLSerializer();
+
+const svgData=
+serializer.serializeToString(svg);
+
+const canvas=
+document.createElement("canvas");
+
+const {w,h}=
+getResolution();
+
+canvas.width=w;
+canvas.height=h;
+
+const ctx=
+canvas.getContext("2d");
+
+const img=
+new Image();
+
+img.onload=()=>{
+
+ctx.drawImage(
+img,
+0,
+0,
+w,
+h
+);
+
+const a=
+document.createElement("a");
+
+a.download=
+"flowform.png";
+
+a.href=
+canvas.toDataURL(
+"image/png"
+);
+
+a.click();
+
+};
+
+img.src=
+"data:image/svg+xml;base64,"+
+btoa(
+unescape(
+encodeURIComponent(
+svgData
+)
+)
+);
+
+}
+
+Object.values(controls)
+.forEach(el=>
+el.addEventListener(
+"input",
+draw
+)
+);
+
+document
+.getElementById("randomize")
+.onclick=randomize;
+
+document
+.getElementById("downloadSVG")
+.onclick=exportSVG;
+
+document
+.getElementById("downloadPNG")
+.onclick=exportPNG;
+
+draw();
+
+</script>
+
+</body>
+</html>

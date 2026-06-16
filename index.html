@@ -1,492 +1,435 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Flowform - Wallpaper Generator</title>
+<title>Flowform Pro</title>
 
-<style>
+<meta
+name="description"
+content="Generate beautiful procedural wallpapers in 4K, 5K, 8K, mobile and tablet formats."
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+>
 
-body{
-font-family:Inter,sans-serif;
-height:100vh;
-display:flex;
-background:#111;
-color:white;
-overflow:hidden;
-}
+<meta
+property="og:title"
+content="Flowform Pro"
+/>
 
-.sidebar{
-width:320px;
-background:#171717;
-padding:20px;
-overflow:auto;
-border-right:1px solid #333;
-}
+<meta
+property="og:description"
+content="Generative wallpaper studio."
+/>
 
-.logo{
-font-size:28px;
-font-weight:700;
-margin-bottom:20px;
-}
+<link rel="manifest" href="manifest.json">
 
-.control{
-margin-bottom:18px;
-}
+<link rel="icon" href="favicon.svg">
 
-label{
-display:block;
-font-size:13px;
-margin-bottom:8px;
-opacity:.8;
-}
+<link rel="preconnect" href="https://fonts.googleapis.com">
 
-input[type=range],
-select,
-input[type=color]{
-width:100%;
-}
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-button{
-width:100%;
-padding:12px;
-border:none;
-cursor:pointer;
-margin-top:10px;
-background:white;
-color:black;
-font-weight:600;
-border-radius:8px;
-}
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+  rel="stylesheet"
+>
 
-button:hover{
-opacity:.9;
-}
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/themes.css">
 
-.canvas{
-flex:1;
-position:relative;
-}
-
-svg{
-width:100%;
-height:100%;
-display:block;
-}
-
-</style>
 </head>
 
-<body>
+<body class="theme-dark">
 
-<div class="sidebar">
-
-<div class="logo">Flowform</div>
-
-<div class="control">
-<label>Preset</label>
-<select id="preset">
-<option value="4k">4K UHD (3840×2160)</option>
-<option value="phone">Phone (1440×3120)</option>
-<option value="tablet">Tablet (2048×2732)</option>
-</select>
-</div>
-
-<div class="control">
-<label>Lines</label>
-<input id="lines" type="range" min="5" max="100" value="40">
-</div>
-
-<div class="control">
-<label>Amplitude</label>
-<input id="amp" type="range" min="0" max="300" value="80">
-</div>
-
-<div class="control">
-<label>Frequency</label>
-<input id="freq" type="range" min="1" max="20" value="6">
-</div>
-
-<div class="control">
-<label>Stroke Width</label>
-<input id="stroke" type="range" min="1" max="20" value="3">
-</div>
-
-<div class="control">
-<label>Direction</label>
-<select id="direction">
-<option value="0">Horizontal</option>
-<option value="90">Vertical</option>
-<option value="35">Diagonal</option>
-</select>
-</div>
-
-<div class="control">
-<label>Style</label>
-<select id="style">
-<option value="stroke">Stroke</option>
-<option value="ribbon">Ribbon</option>
-</select>
-</div>
-
-<div class="control">
-<label>Line Color</label>
-<input id="lineColor" type="color" value="#ffffff">
-</div>
-
-<div class="control">
-<label>Background</label>
-<input id="bgColor" type="color" value="#000000">
-</div>
-
-<button id="randomize">
-Randomize
+<button class="mobile-toggle">
+☰
 </button>
 
-<button id="downloadSVG">
-Export SVG
-</button>
+<div class="app">
 
-<button id="downloadPNG">
-Export PNG
-</button>
+  <aside class="sidebar">
+
+```
+<div class="logo">
+  <h1>Flowform</h1>
+  <span class="version">Pro</span>
+</div>
+
+<div class="section">
+
+  <div class="section-title">
+    Resolution
+  </div>
+
+  <div class="control">
+
+    <label>
+      Export Preset
+    </label>
+
+    <select id="preset">
+
+      <option value="1080p">
+        Full HD (1920×1080)
+      </option>
+
+      <option value="1440p">
+        QHD (2560×1440)
+      </option>
+
+      <option value="4k" selected>
+        4K UHD (3840×2160)
+      </option>
+
+      <option value="5k">
+        5K (5120×2880)
+      </option>
+
+      <option value="8k">
+        8K (7680×4320)
+      </option>
+
+      <option value="phone">
+        Phone (1440×3120)
+      </option>
+
+      <option value="tablet">
+        Tablet (2048×2732)
+      </option>
+
+    </select>
+
+  </div>
 
 </div>
 
-<div class="canvas">
-<svg id="svg"></svg>
+<div class="section">
+
+  <div class="section-title">
+    Wallpaper
+  </div>
+
+  <div class="control">
+
+    <label>
+      Lines
+      <span id="linesValue">
+        40
+      </span>
+    </label>
+
+    <input
+      id="lines"
+      type="range"
+      min="5"
+      max="100"
+      value="40"
+    >
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Amplitude
+      <span id="ampValue">
+        80
+      </span>
+    </label>
+
+    <input
+      id="amp"
+      type="range"
+      min="0"
+      max="300"
+      value="80"
+    >
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Frequency
+      <span id="freqValue">
+        6
+      </span>
+    </label>
+
+    <input
+      id="freq"
+      type="range"
+      min="1"
+      max="20"
+      value="6"
+    >
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Stroke Width
+      <span id="strokeValue">
+        3
+      </span>
+    </label>
+
+    <input
+      id="stroke"
+      type="range"
+      min="1"
+      max="20"
+      value="3"
+    >
+
+  </div>
+
+  <div class="control">
+
+    <label>
+      Style
+    </label>
+
+    <select id="style">
+      <option value="stroke">
+        Stroke
+      </option>
+
+      <option value="ribbon">
+        Ribbon
+      </option>
+    </select>
+
+  </div>
+
 </div>
 
-<script>
+<div class="section">
 
-const svg=document.getElementById("svg");
+  <div class="section-title">
+    Colors
+  </div>
 
-const controls={
-lines:document.getElementById("lines"),
-amp:document.getElementById("amp"),
-freq:document.getElementById("freq"),
-stroke:document.getElementById("stroke"),
-direction:document.getElementById("direction"),
-style:document.getElementById("style"),
-lineColor:document.getElementById("lineColor"),
-bgColor:document.getElementById("bgColor"),
-preset:document.getElementById("preset")
-};
+  <div class="color-grid">
 
-function getResolution(){
+    <div>
 
-switch(controls.preset.value){
+      <label>
+        Line
+      </label>
 
-case "4k":
-return {w:3840,h:2160};
+      <input
+        id="lineColor"
+        type="color"
+        value="#ffffff"
+      >
 
-case "phone":
-return {w:1440,h:3120};
+    </div>
 
-case "tablet":
-return {w:2048,h:2732};
-}
+    <div>
 
-}
+      <label>
+        Background
+      </label>
 
-function waveY(x,y,amp,freq){
-
-return y +
-Math.sin(
-x*0.002*freq
-)*amp +
-
-Math.cos(
-x*0.0015
-)*amp*0.3;
-
-}
-
-function createPath(y){
-
-const {w}=getResolution();
-
-const amp=
-+controls.amp.value;
-
-const freq=
-+controls.freq.value;
-
-let d=`M 0 ${waveY(0,y,amp,freq)}`;
-
-for(let x=0;x<=w;x+=20){
-
-d+=` L ${x} ${waveY(x,y,amp,freq)}`;
-
-}
-
-return d;
-
-}
-
-function createRibbon(y){
-
-const {w}=getResolution();
-
-const amp=
-+controls.amp.value;
-
-const freq=
-+controls.freq.value;
-
-const thickness=
-+controls.stroke.value*4;
-
-let upper=[];
-let lower=[];
-
-for(let x=0;x<=w;x+=20){
-
-let yy=
-waveY(x,y,amp,freq);
-
-upper.push(`${x},${yy}`);
-
-lower.unshift(
-`${x},${yy+thickness}`
-);
-
-}
-
-return [...upper,...lower].join(" ");
-}
-
-function draw(){
-
-const {w,h}=getResolution();
-
-svg.innerHTML="";
-
-svg.setAttribute(
-"viewBox",
-`0 0 ${w} ${h}`
-);
-
-svg.style.background=
-controls.bgColor.value;
-
-const count=
-+controls.lines.value;
-
-const spacing=
-h/count;
-
-for(let i=0;i<count;i++){
-
-let y=i*spacing;
-
-if(
-controls.style.value==="stroke"
-){
-
-const path=
-document.createElementNS(
-"http://www.w3.org/2000/svg",
-"path"
-);
-
-path.setAttribute(
-"d",
-createPath(y)
-);
-
-path.setAttribute(
-"fill",
-"none"
-);
-
-path.setAttribute(
-"stroke",
-controls.lineColor.value
-);
-
-path.setAttribute(
-"stroke-width",
-controls.stroke.value
-);
-
-svg.appendChild(path);
-
-}else{
-
-const poly=
-document.createElementNS(
-"http://www.w3.org/2000/svg",
-"polygon"
-);
-
-poly.setAttribute(
-"points",
-createRibbon(y)
-);
-
-poly.setAttribute(
-"fill",
-controls.lineColor.value
-);
-
-svg.appendChild(poly);
-
-}
-
-}
-
-svg.style.transform=
-`rotate(${controls.direction.value}deg)`;
-
-}
-
-function randomize(){
-
-controls.lines.value=
-Math.floor(
-Math.random()*60
-)+20;
-
-controls.amp.value=
-Math.floor(
-Math.random()*200
-)+30;
-
-controls.freq.value=
-Math.floor(
-Math.random()*10
-)+2;
-
-controls.stroke.value=
-Math.floor(
-Math.random()*6
-)+2;
-
-draw();
-
-}
-
-function exportSVG(){
-
-const serializer=
-new XMLSerializer();
-
-const source=
-serializer.serializeToString(svg);
-
-const blob=
-new Blob(
-[source],
-{
-type:"image/svg+xml"
-}
-);
-
-const url=
-URL.createObjectURL(blob);
-
-const a=
-document.createElement("a");
-
-a.href=url;
-a.download="flowform.svg";
-a.click();
-
-URL.revokeObjectURL(url);
-
-}
-
-function exportPNG(){
-
-const serializer=
-new XMLSerializer();
-
-const svgData=
-serializer.serializeToString(svg);
-
-const canvas=
-document.createElement("canvas");
-
-const {w,h}=
-getResolution();
-
-canvas.width=w;
-canvas.height=h;
-
-const ctx=
-canvas.getContext("2d");
-
-const img=
-new Image();
-
-img.onload=()=>{
-
-ctx.drawImage(
-img,
-0,
-0,
-w,
-h
-);
-
-const a=
-document.createElement("a");
-
-a.download=
-"flowform.png";
-
-a.href=
-canvas.toDataURL(
-"image/png"
-);
-
-a.click();
-
-};
-
-img.src=
-"data:image/svg+xml;base64,"+
-btoa(
-unescape(
-encodeURIComponent(
-svgData
-)
-)
-);
-
-}
-
-Object.values(controls)
-.forEach(el=>
-el.addEventListener(
-"input",
-draw
-)
-);
-
-document
-.getElementById("randomize")
-.onclick=randomize;
-
-document
-.getElementById("downloadSVG")
-.onclick=exportSVG;
-
-document
-.getElementById("downloadPNG")
-.onclick=exportPNG;
-
-draw();
-
-</script>
+      <input
+        id="bgColor"
+        type="color"
+        value="#000000"
+      >
+
+    </div>
+
+  </div>
+
+</div>
+
+<div class="section">
+
+  <div class="section-title">
+    Theme
+  </div>
+
+  <select id="themeSelect">
+
+    <option value="theme-dark">
+      Dark
+    </option>
+
+    <option value="theme-light">
+      Light
+    </option>
+
+    <option value="theme-midnight">
+      Midnight
+    </option>
+
+    <option value="theme-aurora">
+      Aurora
+    </option>
+
+    <option value="theme-forest">
+      Forest
+    </option>
+
+    <option value="theme-sunset">
+      Sunset
+    </option>
+
+    <option value="theme-neon">
+      Neon
+    </option>
+
+  </select>
+
+</div>
+
+<div class="section">
+
+  <div class="section-title">
+    Presets
+  </div>
+
+  <div class="preset-grid">
+
+    <div
+      class="preset-card"
+      data-preset="topo"
+    >
+      <div class="preset-name">
+        Topo
+      </div>
+    </div>
+
+    <div
+      class="preset-card"
+      data-preset="terrain"
+    >
+      <div class="preset-name">
+        Terrain
+      </div>
+    </div>
+
+    <div
+      class="preset-card"
+      data-preset="silk"
+    >
+      <div class="preset-name">
+        Silk
+      </div>
+    </div>
+
+    <div
+      class="preset-card"
+      data-preset="ocean"
+    >
+      <div class="preset-name">
+        Ocean
+      </div>
+    </div>
+
+    <div
+      class="preset-card"
+      data-preset="aurora"
+    >
+      <div class="preset-name">
+        Aurora
+      </div>
+    </div>
+
+    <div
+      class="preset-card"
+      data-preset="zen"
+    >
+      <div class="preset-name">
+        Zen
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="btn-group">
+
+  <button
+    id="randomize"
+    class="btn-primary"
+  >
+    Randomize
+  </button>
+
+  <button
+    id="shareBtn"
+    class="btn-secondary"
+  >
+    Share Design
+  </button>
+
+  <button
+    id="downloadPNG"
+    class="btn-success"
+  >
+    Export PNG
+  </button>
+
+  <button
+    id="downloadSVG"
+    class="btn-secondary"
+  >
+    Export SVG
+  </button>
+
+  <button
+    id="downloadJSON"
+    class="btn-secondary"
+  >
+    Export JSON
+  </button>
+
+</div>
+```
+
+  </aside>
+
+  <main class="canvas-area">
+
+```
+<div class="canvas-toolbar">
+
+  <div class="toolbar-pill">
+    Flowform Pro
+  </div>
+
+</div>
+
+<svg
+  id="wallpaper"
+  xmlns="http://www.w3.org/2000/svg"
+></svg>
+```
+
+  </main>
+
+</div>
+
+<script src="js/presets.js"></script>
+
+<script src="js/flowfield.js"></script>
+
+<script src="js/renderer.js"></script>
+
+<script src="js/export.js"></script>
+
+<script src="js/share.js"></script>
+
+<script src="js/ui.js"></script>
+
+<script src="js/app.js"></script>
 
 </body>
 </html>

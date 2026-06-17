@@ -1,584 +1,1348 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flowform</title>
-<meta name="description" content="Generate beautiful procedural wallpapers in 4K, 5K, 8K, mobile and tablet formats.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0a0a;--sidebar:#111111;--surface:#1a1a1a;--surface2:#222222;
-  --border:#2a2a2a;--text:#e8e8e8;--text2:#999;--accent:#3b82f6;
-  --accent-hover:#2563eb;--success:#22c55e;--success-hover:#16a34a;
-  --sidebar-w:260px;
-}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex}
-.sidebar{width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;flex-shrink:0;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.sidebar::-webkit-scrollbar{width:4px}
-.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.logo{padding:16px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
-.logo h1{font-size:18px;font-weight:600;letter-spacing:-0.3px}
-.logo span{font-size:10px;background:var(--surface2);color:var(--text2);padding:2px 6px;border-radius:4px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase}
-.section{padding:12px 16px;border-bottom:1px solid var(--border)}
-.section-title{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
-.control{margin-bottom:10px}
-.control:last-child{margin-bottom:0}
-.control label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);margin-bottom:5px}
-.control label span{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;min-width:24px;text-align:right}
-input[type=range]{width:100%;height:3px;background:var(--surface2);border-radius:2px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;transition:background 0.15s}
-input[type=range]:hover::-webkit-slider-thumb{background:var(--accent-hover)}
-input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--accent);border:none;cursor:pointer}
-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:12px;font-family:inherit;outline:none;cursor:pointer}
-select:focus{border-color:var(--accent)}
-.color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.color-grid>div{display:flex;flex-direction:column;gap:5px}
-.color-grid label{font-size:11px;color:var(--text2)}
-input[type=color]{width:100%;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);cursor:pointer;padding:2px 4px}
-.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.preset-card{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;cursor:pointer;transition:all 0.15s;font-size:11px;color:var(--text2);text-align:center;user-select:none}
-.preset-card:hover{border-color:var(--accent);color:var(--text);background:var(--surface)}
-.preset-card.active{border-color:var(--accent);color:var(--accent)}
-.btn-group{padding:12px 16px;display:flex;flex-direction:column;gap:6px;margin-top:auto}
-button{padding:8px 12px;border-radius:6px;border:1px solid var(--border);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;transition:all 0.15s;width:100%}
-.btn-primary{background:var(--surface2);color:var(--text);border-color:var(--border)}
-.btn-primary:hover{background:var(--surface);border-color:#444}
-.btn-secondary{background:transparent;color:var(--text2);border-color:var(--border)}
-.btn-secondary:hover{color:var(--text);border-color:#444}
-.btn-success{background:var(--success);color:#fff;border-color:transparent}
-.btn-success:hover{background:var(--success-hover)}
-.btn-accent{background:var(--accent);color:#fff;border-color:transparent}
-.btn-accent:hover{background:var(--accent-hover)}
-.canvas-area{flex:1;position:relative;overflow:hidden;background:#000}
-#wallpaper{width:100%;height:100%;display:block}
-.canvas-toolbar{position:absolute;top:12px;right:12px;z-index:10;pointer-events:none}
-.toolbar-pill{background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(8px);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:0.5px}
-.mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:100;background:var(--sidebar);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:6px;font-size:16px;cursor:pointer;align-items:center;justify-content:center}
-@media(max-width:768px){
-  .mobile-toggle{display:flex}
-  .sidebar{position:fixed;left:-100%;top:0;height:100%;z-index:99;transition:left 0.25s ease;width:280px}
-  .sidebar.open{left:0}
-  .canvas-area{width:100%}
-}
-.toggle-row{display:flex;gap:6px}
-.toggle-btn{flex:1;padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:10px;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:center}
-.toggle-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.toggle-btn:hover:not(.active){color:var(--text);border-color:#444}
-</style>
-</head>
-<body>
-<button class="mobile-toggle" id="mobileToggle">☰</button>
-<div style="display:flex;width:100%;height:100vh">
-<aside class="sidebar" id="sidebar">
-  <div class="logo">
-    <h1>Flowform</h1>
-    <span>Studio</span>
-  </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Flowform</title>
+        <meta
+            name="description"
+            content="Generate beautiful procedural wallpapers in 4K, 5K, 8K, mobile and tablet formats."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            :root {
+                --bg: #0a0a0a;
+                --sidebar: #111111;
+                --surface: #1a1a1a;
+                --surface2: #222222;
+                --border: #2a2a2a;
+                --text: #e8e8e8;
+                --text2: #999;
+                --accent: #3b82f6;
+                --accent-hover: #2563eb;
+                --success: #22c55e;
+                --success-hover: #16a34a;
+                --sidebar-w: 260px;
+            }
+            body {
+                font-family: "Inter", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                height: 100vh;
+                overflow: hidden;
+                display: flex;
+            }
+            .sidebar {
+                width: var(--sidebar-w);
+                background: var(--sidebar);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                overflow-x: hidden;
+                flex-shrink: 0;
+                scrollbar-width: thin;
+                scrollbar-color: var(--border) transparent;
+            }
+            .sidebar::-webkit-scrollbar {
+                width: 4px;
+            }
+            .sidebar::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 2px;
+            }
+            .logo {
+                padding: 16px 16px 12px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            .logo h1 {
+                font-size: 18px;
+                font-weight: 600;
+                letter-spacing: -0.3px;
+            }
+            .logo span {
+                font-size: 10px;
+                background: var(--surface2);
+                color: var(--text2);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-weight: 500;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+            .section {
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .section-title {
+                font-size: 9px;
+                font-weight: 600;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                color: var(--text2);
+                margin-bottom: 10px;
+            }
+            .control {
+                margin-bottom: 10px;
+            }
+            .control:last-child {
+                margin-bottom: 0;
+            }
+            .control label {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 12px;
+                color: var(--text2);
+                margin-bottom: 5px;
+            }
+            .control label span {
+                color: var(--text);
+                font-weight: 500;
+                font-variant-numeric: tabular-nums;
+                min-width: 24px;
+                text-align: right;
+            }
+            input[type="range"] {
+                width: 100%;
+                height: 3px;
+                background: var(--surface2);
+                border-radius: 2px;
+                outline: none;
+                -webkit-appearance: none;
+                appearance: none;
+                cursor: pointer;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 13px;
+                height: 13px;
+                border-radius: 50%;
+                background: var(--accent);
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            input[type="range"]:hover::-webkit-slider-thumb {
+                background: var(--accent-hover);
+            }
+            input[type="range"]::-moz-range-thumb {
+                width: 13px;
+                height: 13px;
+                border-radius: 50%;
+                background: var(--accent);
+                border: none;
+                cursor: pointer;
+            }
+            select {
+                width: 100%;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 6px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-family: inherit;
+                outline: none;
+                cursor: pointer;
+            }
+            select:focus {
+                border-color: var(--accent);
+            }
+            .color-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .color-grid > div {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .color-grid label {
+                font-size: 11px;
+                color: var(--text2);
+            }
+            input[type="color"] {
+                width: 100%;
+                height: 32px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--surface2);
+                cursor: pointer;
+                padding: 2px 4px;
+            }
+            .preset-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .preset-card {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 8px 10px;
+                cursor: pointer;
+                transition: all 0.15s;
+                font-size: 11px;
+                color: var(--text2);
+                text-align: center;
+                user-select: none;
+            }
+            .preset-card:hover {
+                border-color: var(--accent);
+                color: var(--text);
+                background: var(--surface);
+            }
+            .preset-card.active {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+            .btn-group {
+                padding: 12px 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                margin-top: auto;
+            }
+            button {
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+                font-size: 12px;
+                font-weight: 500;
+                font-family: inherit;
+                cursor: pointer;
+                transition: all 0.15s;
+                width: 100%;
+            }
+            .btn-primary {
+                background: var(--surface2);
+                color: var(--text);
+                border-color: var(--border);
+            }
+            .btn-primary:hover {
+                background: var(--surface);
+                border-color: #444;
+            }
+            .btn-secondary {
+                background: transparent;
+                color: var(--text2);
+                border-color: var(--border);
+            }
+            .btn-secondary:hover {
+                color: var(--text);
+                border-color: #444;
+            }
+            .btn-success {
+                background: var(--success);
+                color: #fff;
+                border-color: transparent;
+            }
+            .btn-success:hover {
+                background: var(--success-hover);
+            }
+            .btn-accent {
+                background: var(--accent);
+                color: #fff;
+                border-color: transparent;
+            }
+            .btn-accent:hover {
+                background: var(--accent-hover);
+            }
+            .canvas-area {
+                flex: 1;
+                position: relative;
+                overflow: hidden;
+                background: #000;
+            }
+            #wallpaper {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+            .canvas-toolbar {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                z-index: 10;
+                pointer-events: none;
+            }
+            .toolbar-pill {
+                background: rgba(0, 0, 0, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                color: rgba(255, 255, 255, 0.6);
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 0.5px;
+            }
+            .mobile-toggle {
+                display: none;
+                position: fixed;
+                top: 12px;
+                left: 12px;
+                z-index: 100;
+                background: var(--sidebar);
+                border: 1px solid var(--border);
+                color: var(--text);
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                font-size: 16px;
+                cursor: pointer;
+                align-items: center;
+                justify-content: center;
+            }
+            @media (max-width: 768px) {
+                .mobile-toggle {
+                    display: flex;
+                }
+                .sidebar {
+                    position: fixed;
+                    left: -100%;
+                    top: 0;
+                    height: 100%;
+                    z-index: 99;
+                    transition: left 0.25s ease;
+                    width: 280px;
+                }
+                .sidebar.open {
+                    left: 0;
+                }
+                .canvas-area {
+                    width: 100%;
+                }
+            }
+            .toggle-row {
+                display: flex;
+                gap: 6px;
+            }
+            .toggle-btn {
+                flex: 1;
+                padding: 5px 8px;
+                border-radius: 5px;
+                border: 1px solid var(--border);
+                background: var(--surface2);
+                color: var(--text2);
+                font-size: 10px;
+                font-weight: 500;
+                cursor: pointer;
+                font-family: inherit;
+                transition: all 0.15s;
+                text-align: center;
+            }
+            .toggle-btn.active {
+                background: var(--accent);
+                color: #fff;
+                border-color: var(--accent);
+            }
+            .toggle-btn:hover:not(.active) {
+                color: var(--text);
+                border-color: #444;
+            }
+        </style>
+    </head>
+    <body>
+        <button class="mobile-toggle" id="mobileToggle">☰</button>
+        <div style="display: flex; width: 100%; height: 100vh">
+            <aside class="sidebar" id="sidebar">
+                <div class="logo">
+                    <h1>Flowform</h1>
+                    <span>Studio</span>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Resolution</div>
-    <div class="control">
-      <label>Export Preset</label>
-      <select id="preset">
-        <option value="1080p">Full HD (1920×1080)</option>
-        <option value="1440p">QHD (2560×1440)</option>
-        <option value="4k" selected>4K UHD (3840×2160)</option>
-        <option value="5k">5K (5120×2880)</option>
-        <option value="8k">8K (7680×4320)</option>
-        <option value="phone">Phone (1440×3120)</option>
-        <option value="tablet">Tablet (2048×2732)</option>
-      </select>
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Resolution</div>
+                    <div class="control">
+                        <label>Export Preset</label>
+                        <select id="preset">
+                            <option value="1080p">Full HD (1920×1080)</option>
+                            <option value="1440p">QHD (2560×1440)</option>
+                            <option value="4k" selected>
+                                4K UHD (3840×2160)
+                            </option>
+                            <option value="5k">5K (5120×2880)</option>
+                            <option value="8k">8K (7680×4320)</option>
+                            <option value="phone">Phone (1440×3120)</option>
+                            <option value="tablet">Tablet (2048×2732)</option>
+                        </select>
+                    </div>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Wave Mode</div>
-    <div class="control">
-      <label>Type</label>
-      <select id="waveMode">
-        <option value="sine">Sine</option>
-        <option value="noise">Perlin Noise</option>
-        <option value="lissajous">Lissajous</option>
-        <option value="spiral">Spiral</option>
-        <option value="zigzag">Zigzag</option>
-        <option value="ripple">Ripple</option>
-        <option value="interference">Interference</option>
-      </select>
-    </div>
-    <div class="control">
-      <label>Style</label>
-      <div class="toggle-row">
-        <button class="toggle-btn active" data-style="stroke">Stroke</button>
-        <button class="toggle-btn" data-style="ribbon">Ribbon</button>
-        <button class="toggle-btn" data-style="dots">Dots</button>
-      </div>
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Wave Mode</div>
+                    <div class="control">
+                        <label>Type</label>
+                        <select id="waveMode">
+                            <option value="sine">Sine</option>
+                            <option value="noise">Perlin Noise</option>
+                            <option value="lissajous">Lissajous</option>
+                            <option value="spiral">Spiral</option>
+                            <option value="zigzag">Zigzag</option>
+                            <option value="ripple">Ripple</option>
+                            <option value="interference">Interference</option>
+                        </select>
+                    </div>
+                    <div class="control">
+                        <label>Style</label>
+                        <div class="toggle-row">
+                            <button
+                                class="toggle-btn active"
+                                data-style="stroke"
+                            >
+                                Stroke
+                            </button>
+                            <button class="toggle-btn" data-style="ribbon">
+                                Ribbon
+                            </button>
+                            <button class="toggle-btn" data-style="dots">
+                                Dots
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Shape</div>
-    <div class="control">
-      <label>Lines <span id="linesValue">40</span></label>
-      <input id="lines" type="range" min="5" max="120" value="40" step="1">
-    </div>
-    <div class="control">
-      <label>Amplitude <span id="ampValue">80</span></label>
-      <input id="amp" type="range" min="0" max="300" value="80" step="1">
-    </div>
-    <div class="control">
-      <label>Frequency <span id="freqValue">6</span></label>
-      <input id="freq" type="range" min="1" max="30" value="6" step="1">
-    </div>
-    <div class="control">
-      <label>Phase Shift <span id="phaseValue">0</span></label>
-      <input id="phase" type="range" min="0" max="100" value="0" step="1">
-    </div>
-    <div class="control">
-      <label>Rotation° <span id="rotValue">0</span></label>
-      <input id="rotation" type="range" min="-180" max="180" value="0" step="1">
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Shape</div>
+                    <div class="control">
+                        <label>Lines <span id="linesValue">40</span></label>
+                        <input
+                            id="lines"
+                            type="range"
+                            min="5"
+                            max="120"
+                            value="40"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label>Amplitude <span id="ampValue">80</span></label>
+                        <input
+                            id="amp"
+                            type="range"
+                            min="0"
+                            max="300"
+                            value="80"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label>Frequency <span id="freqValue">6</span></label>
+                        <input
+                            id="freq"
+                            type="range"
+                            min="1"
+                            max="30"
+                            value="6"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label
+                            >Phase Shift <span id="phaseValue">0</span></label
+                        >
+                        <input
+                            id="phase"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value="0"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label>Rotation° <span id="rotValue">0</span></label>
+                        <input
+                            id="rotation"
+                            type="range"
+                            min="-180"
+                            max="180"
+                            value="0"
+                            step="1"
+                        />
+                    </div>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Stroke</div>
-    <div class="control">
-      <label>Width <span id="strokeValue">3</span></label>
-      <input id="stroke" type="range" min="1" max="20" value="3" step="1">
-    </div>
-    <div class="control">
-      <label>Opacity <span id="opacityValue">100</span></label>
-      <input id="opacity" type="range" min="10" max="100" value="100" step="1">
-    </div>
-    <div class="control">
-      <label>Taper</label>
-      <div class="toggle-row">
-        <button class="toggle-btn active" data-taper="none">None</button>
-        <button class="toggle-btn" data-taper="fade">Fade</button>
-        <button class="toggle-btn" data-taper="wave">Wave</button>
-      </div>
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Stroke</div>
+                    <div class="control">
+                        <label>Width <span id="strokeValue">3</span></label>
+                        <input
+                            id="stroke"
+                            type="range"
+                            min="1"
+                            max="20"
+                            value="3"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label
+                            >Opacity <span id="opacityValue">100</span></label
+                        >
+                        <input
+                            id="opacity"
+                            type="range"
+                            min="10"
+                            max="100"
+                            value="100"
+                            step="1"
+                        />
+                    </div>
+                    <div class="control">
+                        <label>Taper</label>
+                        <div class="toggle-row">
+                            <button class="toggle-btn active" data-taper="none">
+                                None
+                            </button>
+                            <button class="toggle-btn" data-taper="fade">
+                                Fade
+                            </button>
+                            <button class="toggle-btn" data-taper="wave">
+                                Wave
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Colors</div>
-    <div class="color-grid">
-      <div>
-        <label>Line A</label>
-        <input id="lineColor" type="color" value="#ffffff">
-      </div>
-      <div>
-        <label>Line B</label>
-        <input id="lineColor2" type="color" value="#3b82f6">
-      </div>
-      <div>
-        <label>Background</label>
-        <input id="bgColor" type="color" value="#000000">
-      </div>
-      <div>
-        <label>Gradient</label>
-        <select id="gradientMode" style="height:32px;margin-top:0">
-          <option value="solid">Solid</option>
-          <option value="linear">Linear</option>
-          <option value="radial">Radial</option>
-          <option value="depth">Depth</option>
-        </select>
-      </div>
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Colors</div>
+                    <div class="color-grid">
+                        <div>
+                            <label>Line A</label>
+                            <input
+                                id="lineColor"
+                                type="color"
+                                value="#ffffff"
+                            />
+                        </div>
+                        <div>
+                            <label>Line B</label>
+                            <input
+                                id="lineColor2"
+                                type="color"
+                                value="#3b82f6"
+                            />
+                        </div>
+                        <div>
+                            <label>Background</label>
+                            <input id="bgColor" type="color" value="#000000" />
+                        </div>
+                        <div>
+                            <label>Gradient</label>
+                            <select
+                                id="gradientMode"
+                                style="height: 32px; margin-top: 0"
+                            >
+                                <option value="solid">Solid</option>
+                                <option value="linear">Linear</option>
+                                <option value="radial">Radial</option>
+                                <option value="depth">Depth</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="section">
-    <div class="section-title">Presets</div>
-    <div class="preset-grid">
-      <div class="preset-card" data-preset="topo">Topo</div>
-      <div class="preset-card" data-preset="terrain">Terrain</div>
-      <div class="preset-card" data-preset="silk">Silk</div>
-      <div class="preset-card" data-preset="ocean">Ocean</div>
-      <div class="preset-card" data-preset="aurora">Aurora</div>
-      <div class="preset-card" data-preset="zen">Zen</div>
-      <div class="preset-card" data-preset="plasma">Plasma</div>
-      <div class="preset-card" data-preset="matrix">Matrix</div>
-    </div>
-  </div>
+                <div class="section">
+                    <div class="section-title">Presets</div>
+                    <div class="preset-grid">
+                        <div class="preset-card" data-preset="topo">Topo</div>
+                        <div class="preset-card" data-preset="terrain">
+                            Terrain
+                        </div>
+                        <div class="preset-card" data-preset="silk">Silk</div>
+                        <div class="preset-card" data-preset="ocean">Ocean</div>
+                        <div class="preset-card" data-preset="aurora">
+                            Aurora
+                        </div>
+                        <div class="preset-card" data-preset="zen">Zen</div>
+                        <div class="preset-card" data-preset="plasma">
+                            Plasma
+                        </div>
+                        <div class="preset-card" data-preset="matrix">
+                            Matrix
+                        </div>
+                    </div>
+                </div>
 
-  <div class="btn-group">
-    <button id="randomize" class="btn-primary">⟳ Randomize</button>
-    <button id="shareBtn" class="btn-secondary">Share URL</button>
-    <button id="downloadPNG" class="btn-success">Export PNG</button>
-    <button id="downloadSVG" class="btn-secondary">Export SVG</button>
-  </div>
-</aside>
+                <div class="btn-group">
+                    <button id="randomize" class="btn-primary">
+                        ⟳ Randomize
+                    </button>
+                    <button id="shareBtn" class="btn-secondary">
+                        Share URL
+                    </button>
+                    <button id="downloadPNG" class="btn-success">
+                        Export PNG
+                    </button>
+                    <button id="downloadSVG" class="btn-secondary">
+                        Export SVG
+                    </button>
+                </div>
+            </aside>
 
-<main class="canvas-area">
-  <div class="canvas-toolbar"><div class="toolbar-pill" id="resLabel">4K UHD · 3840×2160</div></div>
-  <svg id="wallpaper" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"></svg>
-</main>
-</div>
+            <main class="canvas-area">
+                <div class="canvas-toolbar">
+                    <div class="toolbar-pill" id="resLabel">
+                        4K UHD · 3840×2160
+                    </div>
+                </div>
+                <svg
+                    id="wallpaper"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="xMidYMid slice"
+                ></svg>
+            </main>
+        </div>
 
-<script>
-const RESOLUTIONS={
-  '1080p':[1920,1080],'1440p':[2560,1440],'4k':[3840,2160],
-  '5k':[5120,2880],'8k':[7680,4320],'phone':[1440,3120],'tablet':[2048,2732]
-};
-const PRESETS_DATA={
-  topo:{lines:60,amp:40,freq:8,phase:0,rotation:0,stroke:2,opacity:80,waveMode:'sine',lineColor:'#ffffff',lineColor2:'#cccccc',bgColor:'#1a1a1a',gradientMode:'depth',style:'stroke',taper:'none'},
-  terrain:{lines:35,amp:120,freq:4,phase:30,rotation:0,stroke:3,opacity:90,waveMode:'noise',lineColor:'#8b7355',lineColor2:'#c4a882',bgColor:'#1c1610',gradientMode:'depth',style:'stroke',taper:'fade'},
-  silk:{lines:50,amp:60,freq:10,phase:20,rotation:15,stroke:2,opacity:85,waveMode:'sine',lineColor:'#e8c4e1',lineColor2:'#9b59b6',bgColor:'#120a1a',gradientMode:'linear',style:'stroke',taper:'wave'},
-  ocean:{lines:45,amp:50,freq:7,phase:0,rotation:0,stroke:2,opacity:70,waveMode:'interference',lineColor:'#00bcd4',lineColor2:'#006494',bgColor:'#000d1a',gradientMode:'depth',style:'stroke',taper:'fade'},
-  aurora:{lines:30,amp:100,freq:3,phase:50,rotation:0,stroke:4,opacity:60,waveMode:'noise',lineColor:'#00ff88',lineColor2:'#ff00ff',bgColor:'#020408',gradientMode:'linear',style:'ribbon',taper:'none'},
-  zen:{lines:20,amp:30,freq:5,phase:0,rotation:0,stroke:2,opacity:100,waveMode:'sine',lineColor:'#ffffff',lineColor2:'#888888',bgColor:'#000000',gradientMode:'solid',style:'stroke',taper:'none'},
-  plasma:{lines:40,amp:80,freq:12,phase:0,rotation:45,stroke:2,opacity:75,waveMode:'lissajous',lineColor:'#ff6b6b',lineColor2:'#ffd93d',bgColor:'#0d0010',gradientMode:'radial',style:'stroke',taper:'wave'},
-  matrix:{lines:80,amp:20,freq:15,phase:0,rotation:0,stroke:1,opacity:100,waveMode:'sine',lineColor:'#00ff41',lineColor2:'#003b00',bgColor:'#000000',gradientMode:'depth',style:'dots',taper:'none'}
-};
+        <script>
+            const RESOLUTIONS = {
+                "1080p": [1920, 1080],
+                "1440p": [2560, 1440],
+                "4k": [3840, 2160],
+                "5k": [5120, 2880],
+                "8k": [7680, 4320],
+                phone: [1440, 3120],
+                tablet: [2048, 2732],
+            };
+            const PRESETS_DATA = {
+                topo: {
+                    lines: 60,
+                    amp: 40,
+                    freq: 8,
+                    phase: 0,
+                    rotation: 0,
+                    stroke: 2,
+                    opacity: 80,
+                    waveMode: "sine",
+                    lineColor: "#ffffff",
+                    lineColor2: "#cccccc",
+                    bgColor: "#1a1a1a",
+                    gradientMode: "depth",
+                    style: "stroke",
+                    taper: "none",
+                },
+                terrain: {
+                    lines: 35,
+                    amp: 120,
+                    freq: 4,
+                    phase: 30,
+                    rotation: 0,
+                    stroke: 3,
+                    opacity: 90,
+                    waveMode: "noise",
+                    lineColor: "#8b7355",
+                    lineColor2: "#c4a882",
+                    bgColor: "#1c1610",
+                    gradientMode: "depth",
+                    style: "stroke",
+                    taper: "fade",
+                },
+                silk: {
+                    lines: 50,
+                    amp: 60,
+                    freq: 10,
+                    phase: 20,
+                    rotation: 15,
+                    stroke: 2,
+                    opacity: 85,
+                    waveMode: "sine",
+                    lineColor: "#e8c4e1",
+                    lineColor2: "#9b59b6",
+                    bgColor: "#120a1a",
+                    gradientMode: "linear",
+                    style: "stroke",
+                    taper: "wave",
+                },
+                ocean: {
+                    lines: 45,
+                    amp: 50,
+                    freq: 7,
+                    phase: 0,
+                    rotation: 0,
+                    stroke: 2,
+                    opacity: 70,
+                    waveMode: "interference",
+                    lineColor: "#00bcd4",
+                    lineColor2: "#006494",
+                    bgColor: "#000d1a",
+                    gradientMode: "depth",
+                    style: "stroke",
+                    taper: "fade",
+                },
+                aurora: {
+                    lines: 30,
+                    amp: 100,
+                    freq: 3,
+                    phase: 50,
+                    rotation: 0,
+                    stroke: 4,
+                    opacity: 60,
+                    waveMode: "noise",
+                    lineColor: "#00ff88",
+                    lineColor2: "#ff00ff",
+                    bgColor: "#020408",
+                    gradientMode: "linear",
+                    style: "ribbon",
+                    taper: "none",
+                },
+                zen: {
+                    lines: 20,
+                    amp: 30,
+                    freq: 5,
+                    phase: 0,
+                    rotation: 0,
+                    stroke: 2,
+                    opacity: 100,
+                    waveMode: "sine",
+                    lineColor: "#ffffff",
+                    lineColor2: "#888888",
+                    bgColor: "#000000",
+                    gradientMode: "solid",
+                    style: "stroke",
+                    taper: "none",
+                },
+                plasma: {
+                    lines: 40,
+                    amp: 80,
+                    freq: 12,
+                    phase: 0,
+                    rotation: 45,
+                    stroke: 2,
+                    opacity: 75,
+                    waveMode: "lissajous",
+                    lineColor: "#ff6b6b",
+                    lineColor2: "#ffd93d",
+                    bgColor: "#0d0010",
+                    gradientMode: "radial",
+                    style: "stroke",
+                    taper: "wave",
+                },
+                matrix: {
+                    lines: 80,
+                    amp: 20,
+                    freq: 15,
+                    phase: 0,
+                    rotation: 0,
+                    stroke: 1,
+                    opacity: 100,
+                    waveMode: "sine",
+                    lineColor: "#00ff41",
+                    lineColor2: "#003b00",
+                    bgColor: "#000000",
+                    gradientMode: "depth",
+                    style: "dots",
+                    taper: "none",
+                },
+            };
 
-let state={
-  lines:40,amp:80,freq:6,phase:0,rotation:0,stroke:3,opacity:100,
-  waveMode:'sine',lineColor:'#ffffff',lineColor2:'#3b82f6',bgColor:'#000000',
-  gradientMode:'solid',style:'stroke',taper:'none',preset:'4k',noiseOffset:0
-};
+            let state = {
+                lines: 40,
+                amp: 80,
+                freq: 6,
+                phase: 0,
+                rotation: 0,
+                stroke: 3,
+                opacity: 100,
+                waveMode: "sine",
+                lineColor: "#ffffff",
+                lineColor2: "#3b82f6",
+                bgColor: "#000000",
+                gradientMode: "solid",
+                style: "stroke",
+                taper: "none",
+                preset: "4k",
+                noiseOffset: 0,
+            };
 
-let noiseP=[];
-function initNoise(n){noiseP=[];for(let i=0;i<n;i++)noiseP.push(Math.random()*200-100);}
-initNoise(256);
+            let noiseP = [];
+            function initNoise(n) {
+                noiseP = [];
+                for (let i = 0; i < n; i++)
+                    noiseP.push(Math.random() * 200 - 100);
+            }
+            initNoise(256);
 
-function lerp(a,b,t){return a+(b-a)*t;}
-function smoothstep(t){return t*t*(3-2*t);}
-function noise(x,y){
-  const xi=Math.floor(x)&255,yi=Math.floor(y)&255;
-  const xf=x-Math.floor(x),yf=y-Math.floor(y);
-  const u=smoothstep(xf),v=smoothstep(yf);
-  const a=noiseP[xi&255]+yi,b=noiseP[(xi+1)&255]+yi;
-  const aa=noiseP[a&255],ab=noiseP[(a+1)&255],ba=noiseP[b&255],bb=noiseP[(b+1)&255];
-  return lerp(lerp(Math.sin(aa+xf)*43758.5453%1,Math.sin(ba+xf-1)*43758.5453%1,u),
-              lerp(Math.sin(ab+xf)*43758.5453%1,Math.sin(bb+xf-1)*43758.5453%1,u),v)*2-0.5;
-}
-function fbm(x,y,oct=4){
-  let v=0,a=0.5,f=1;
-  for(let i=0;i<oct;i++){v+=a*noise(x*f,y*f);a*=0.5;f*=2;}
-  return v;
-}
+            function lerp(a, b, t) {
+                return a + (b - a) * t;
+            }
+            function smoothstep(t) {
+                return t * t * (3 - 2 * t);
+            }
+            function noise(x, y) {
+                const xi = Math.floor(x) & 255,
+                    yi = Math.floor(y) & 255;
+                const xf = x - Math.floor(x),
+                    yf = y - Math.floor(y);
+                const u = smoothstep(xf),
+                    v = smoothstep(yf);
+                const a = noiseP[xi & 255] + yi,
+                    b = noiseP[(xi + 1) & 255] + yi;
+                const aa = noiseP[a & 255],
+                    ab = noiseP[(a + 1) & 255],
+                    ba = noiseP[b & 255],
+                    bb = noiseP[(b + 1) & 255];
+                return (
+                    lerp(
+                        lerp(
+                            (Math.sin(aa + xf) * 43758.5453) % 1,
+                            (Math.sin(ba + xf - 1) * 43758.5453) % 1,
+                            u,
+                        ),
+                        lerp(
+                            (Math.sin(ab + xf) * 43758.5453) % 1,
+                            (Math.sin(bb + xf - 1) * 43758.5453) % 1,
+                            u,
+                        ),
+                        v,
+                    ) *
+                        2 -
+                    0.5
+                );
+            }
+            function fbm(x, y, oct = 4) {
+                let v = 0,
+                    a = 0.5,
+                    f = 1;
+                for (let i = 0; i < oct; i++) {
+                    v += a * noise(x * f, y * f);
+                    a *= 0.5;
+                    f *= 2;
+                }
+                return v;
+            }
 
-function hexToRgb(hex){
-  const r=parseInt(hex.slice(1,3),16)/255;
-  const g=parseInt(hex.slice(3,5),16)/255;
-  const b=parseInt(hex.slice(5,7),16)/255;
-  return[r,g,b];
-}
-function lerpColor(c1,c2,t){
-  const a=hexToRgb(c1),b=hexToRgb(c2);
-  const r=Math.round(lerp(a[0],b[0],t)*255);
-  const g=Math.round(lerp(a[1],b[1],t)*255);
-  const bl=Math.round(lerp(a[2],b[2],t)*255);
-  return`rgb(${r},${g},${bl})`;
-}
+            function hexToRgb(hex) {
+                const r = parseInt(hex.slice(1, 3), 16) / 255;
+                const g = parseInt(hex.slice(3, 5), 16) / 255;
+                const b = parseInt(hex.slice(5, 7), 16) / 255;
+                return [r, g, b];
+            }
+            function lerpColor(c1, c2, t) {
+                const a = hexToRgb(c1),
+                    b = hexToRgb(c2);
+                const r = Math.round(lerp(a[0], b[0], t) * 255);
+                const g = Math.round(lerp(a[1], b[1], t) * 255);
+                const bl = Math.round(lerp(a[2], b[2], t) * 255);
+                return `rgb(${r},${g},${bl})`;
+            }
 
-const svg=document.getElementById('wallpaper');
+            const svg = document.getElementById("wallpaper");
 
-function getLineColor(t,mode){
-  if(mode==='solid')return state.lineColor;
-  if(mode==='linear')return lerpColor(state.lineColor,state.lineColor2,t);
-  if(mode==='radial')return lerpColor(state.lineColor,state.lineColor2,Math.abs(t*2-1));
-  if(mode==='depth')return lerpColor(state.lineColor,state.lineColor2,t*0.7);
-  return state.lineColor;
-}
+            function getLineColor(t, mode) {
+                if (mode === "solid") return state.lineColor;
+                if (mode === "linear")
+                    return lerpColor(state.lineColor, state.lineColor2, t);
+                if (mode === "radial")
+                    return lerpColor(
+                        state.lineColor,
+                        state.lineColor2,
+                        Math.abs(t * 2 - 1),
+                    );
+                if (mode === "depth")
+                    return lerpColor(
+                        state.lineColor,
+                        state.lineColor2,
+                        t * 0.7,
+                    );
+                return state.lineColor;
+            }
 
-function buildPath(W,H,lineIndex,totalLines){
-  const {lines,amp,freq,phase,rotation,waveMode,noiseOffset}=state;
-  const y0=(lineIndex+0.5)*(H/totalLines);
-  const phaseOff=(lineIndex/totalLines)*phase*0.2+noiseOffset;
-  const pts=[];
-  const steps=Math.min(300,W/4);
-  const dx=W/steps;
+            function buildPath(W, H, lineIndex, totalLines) {
+                const {
+                    lines,
+                    amp,
+                    freq,
+                    phase,
+                    rotation,
+                    waveMode,
+                    noiseOffset,
+                } = state;
+                const y0 = (lineIndex + 0.5) * (H / totalLines);
+                const phaseOff =
+                    (lineIndex / totalLines) * phase * 0.2 + noiseOffset;
+                const pts = [];
+                const steps = Math.min(500, Math.max(200, W / 8));
+                const dx = W / steps;
 
-  for(let i=0;i<=steps;i++){
-    const x=i*dx;
-    const nx=x/W;
-    let dy=0;
-    const t=(lineIndex/totalLines);
+                for (let i = 0; i <= steps; i++) {
+                    const x = i * dx;
+                    const nx = x / W;
+                    let dy = 0;
+                    const t = lineIndex / totalLines;
 
-    if(waveMode==='sine'){
-      dy=Math.sin(nx*freq*Math.PI*2+phaseOff)*amp;
-    } else if(waveMode==='noise'){
-      dy=fbm(nx*freq*0.3+phaseOff*0.1,t*3+noiseOffset*0.5,5)*amp*2;
-    } else if(waveMode==='lissajous'){
-      const ratio=1+lineIndex/totalLines;
-      dy=Math.sin(nx*freq*Math.PI*2*ratio+phaseOff)*amp*Math.sin(nx*Math.PI);
-    } else if(waveMode==='spiral'){
-      const angle=nx*freq*Math.PI*2;
-      const r=amp*(0.2+nx*0.8);
-      dy=Math.sin(angle+phaseOff+t*Math.PI*2)*r;
-    } else if(waveMode==='zigzag'){
-      const saw=(nx*freq)%1;
-      dy=(saw<0.5?saw*4-1:(1-saw)*4-1)*amp*0.5+Math.sin(nx*freq*0.5+phaseOff)*amp*0.3;
-    } else if(waveMode==='ripple'){
-      const cx=0.5;
-      const dist=Math.abs(nx-cx);
-      dy=Math.sin(dist*freq*Math.PI*6-phaseOff)*amp*Math.exp(-dist*2);
-    } else if(waveMode==='interference'){
-      const w1=Math.sin(nx*freq*Math.PI*2+phaseOff)*amp*0.5;
-      const w2=Math.sin(nx*freq*Math.PI*2.7+phaseOff*0.7+t*2)*amp*0.5;
-      dy=w1+w2;
-    }
-    pts.push([x, y0+dy]);
-  }
-  return pts;
-}
+                    if (waveMode === "sine") {
+                        dy = Math.sin(nx * freq * Math.PI * 2 + phaseOff) * amp;
+                    } else if (waveMode === "noise") {
+                        dy =
+                            fbm(
+                                nx * freq * 0.3 + phaseOff * 0.1,
+                                t * 3 + noiseOffset * 0.5,
+                                5,
+                            ) *
+                            amp *
+                            2;
+                    } else if (waveMode === "lissajous") {
+                        const ratio = 1 + lineIndex / totalLines;
+                        dy =
+                            Math.sin(
+                                nx * freq * Math.PI * 2 * ratio + phaseOff,
+                            ) *
+                            amp *
+                            Math.sin(nx * Math.PI);
+                    } else if (waveMode === "spiral") {
+                        const angle = nx * freq * Math.PI * 2;
+                        const r = amp * (0.2 + nx * 0.8);
+                        dy = Math.sin(angle + phaseOff + t * Math.PI * 2) * r;
+                    } else if (waveMode === "zigzag") {
+                        const saw = (nx * freq) % 1;
+                        dy =
+                            (saw < 0.5 ? saw * 4 - 1 : (1 - saw) * 4 - 1) *
+                                amp *
+                                0.5 +
+                            Math.sin(nx * freq * 0.5 + phaseOff) * amp * 0.3;
+                    } else if (waveMode === "ripple") {
+                        const cx = 0.5;
+                        const dist = Math.abs(nx - cx);
+                        dy =
+                            Math.sin(dist * freq * Math.PI * 6 - phaseOff) *
+                            amp *
+                            Math.exp(-dist * 2);
+                    } else if (waveMode === "interference") {
+                        const w1 =
+                            Math.sin(nx * freq * Math.PI * 2 + phaseOff) *
+                            amp *
+                            0.5;
+                        const w2 =
+                            Math.sin(
+                                nx * freq * Math.PI * 2.7 +
+                                    phaseOff * 0.7 +
+                                    t * 2,
+                            ) *
+                            amp *
+                            0.5;
+                        dy = w1 + w2;
+                    }
+                    pts.push([x, y0 + dy]);
+                }
+                return pts;
+            }
 
-function ptsToPath(pts){
-  if(!pts.length)return'';
-  let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-  for(let i=1;i<pts.length;i++){
-    const p=pts[i-1],q=pts[i];
-    const cx=(p[0]+q[0])/2;
-    d+=` Q${p[0].toFixed(1)},${p[1].toFixed(1)} ${cx.toFixed(1)},${q[1].toFixed(1)}`;
-  }
-  return d;
-}
+            function ptsToPath(pts) {
+                if (pts.length < 2) return "";
+                const t = 0.4;
+                let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const p0 = pts[Math.max(i - 1, 0)];
+                    const p1 = pts[i];
+                    const p2 = pts[i + 1];
+                    const p3 = pts[Math.min(i + 2, pts.length - 1)];
+                    const cp1x = (p1[0] + (p2[0] - p0[0]) * t).toFixed(1);
+                    const cp1y = (p1[1] + (p2[1] - p0[1]) * t).toFixed(1);
+                    const cp2x = (p2[0] - (p3[0] - p1[0]) * t).toFixed(1);
+                    const cp2y = (p2[1] - (p3[1] - p1[1]) * t).toFixed(1);
+                    d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+                }
+                return d;
+            }
 
-function render(){
-  const [W,H]=RESOLUTIONS[state.preset]||[3840,2160];
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+            function render() {
+                const [W, H] = RESOLUTIONS[state.preset] || [3840, 2160];
+                svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
-  while(svg.firstChild)svg.removeChild(svg.firstChild);
+                while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-  const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
-  bg.setAttribute('width',W);bg.setAttribute('height',H);
-  bg.setAttribute('fill',state.bgColor);
-  svg.appendChild(bg);
+                const bg = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "rect",
+                );
+                bg.setAttribute("width", W);
+                bg.setAttribute("height", H);
+                bg.setAttribute("fill", state.bgColor);
+                svg.appendChild(bg);
 
-  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-  if(state.rotation!==0){
-    g.setAttribute('transform',`rotate(${state.rotation},${W/2},${H/2})`);
-  }
+                const g = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "g",
+                );
+                if (state.rotation !== 0) {
+                    g.setAttribute(
+                        "transform",
+                        `rotate(${state.rotation},${W / 2},${H / 2})`,
+                    );
+                }
 
-  const {lines:N,stroke,opacity,gradientMode,style,taper}=state;
-  const opacityVal=(opacity/100).toFixed(2);
+                const {
+                    lines: N,
+                    stroke,
+                    opacity,
+                    gradientMode,
+                    style,
+                    taper,
+                } = state;
+                const opacityVal = (opacity / 100).toFixed(2);
 
-  if(style==='dots'){
-    for(let i=0;i<N;i++){
-      const pts=buildPath(W*1.4,H,i,N);
-      const color=getLineColor(i/N,gradientMode);
-      for(let j=0;j<pts.length;j+=3){
-        const [x,y]=pts[j];
-        if(x<-W*0.2||x>W*1.2)continue;
-        const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
-        c.setAttribute('cx',x.toFixed(1));
-        c.setAttribute('cy',y.toFixed(1));
-        c.setAttribute('r',stroke);
-        c.setAttribute('fill',color);
-        c.setAttribute('opacity',opacityVal);
-        g.appendChild(c);
-      }
-    }
-  } else if(style==='ribbon'){
-    for(let i=0;i<N-1;i++){
-      const pts1=buildPath(W*1.4,H,i,N);
-      const pts2=buildPath(W*1.4,H,i+1,N);
-      const color=getLineColor(i/N,gradientMode);
-      let d=`M${pts1[0][0].toFixed(1)},${pts1[0][1].toFixed(1)}`;
-      for(let j=1;j<pts1.length;j++)d+=` L${pts1[j][0].toFixed(1)},${pts1[j][1].toFixed(1)}`;
-      for(let j=pts2.length-1;j>=0;j--)d+=` L${pts2[j][0].toFixed(1)},${pts2[j][1].toFixed(1)}`;
-      d+=' Z';
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',d);
-      path.setAttribute('fill',color);
-      path.setAttribute('opacity',(opacity/100*0.7).toFixed(2));
-      path.setAttribute('stroke','none');
-      g.appendChild(path);
-    }
-  } else {
-    for(let i=0;i<N;i++){
-      const pts=buildPath(W*1.4,H,i,N);
-      const d=ptsToPath(pts);
-      const color=getLineColor(i/N,gradientMode);
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',d);
-      path.setAttribute('fill','none');
-      path.setAttribute('stroke',color);
+                if (style === "dots") {
+                    for (let i = 0; i < N; i++) {
+                        const pts = buildPath(W * 1.4, H, i, N);
+                        const color = getLineColor(i / N, gradientMode);
+                        for (let j = 0; j < pts.length; j += 3) {
+                            const [x, y] = pts[j];
+                            if (x < -W * 0.2 || x > W * 1.2) continue;
+                            const c = document.createElementNS(
+                                "http://www.w3.org/2000/svg",
+                                "circle",
+                            );
+                            c.setAttribute("cx", x.toFixed(1));
+                            c.setAttribute("cy", y.toFixed(1));
+                            c.setAttribute("r", stroke);
+                            c.setAttribute("fill", color);
+                            c.setAttribute("opacity", opacityVal);
+                            g.appendChild(c);
+                        }
+                    }
+                } else if (style === "ribbon") {
+                    for (let i = 0; i < N - 1; i++) {
+                        const pts1 = buildPath(W * 1.4, H, i, N);
+                        const pts2 = buildPath(W * 1.4, H, i + 1, N);
+                        const color = getLineColor(i / N, gradientMode);
+                        let d = `M${pts1[0][0].toFixed(1)},${pts1[0][1].toFixed(1)}`;
+                        for (let j = 1; j < pts1.length; j++)
+                            d += ` L${pts1[j][0].toFixed(1)},${pts1[j][1].toFixed(1)}`;
+                        for (let j = pts2.length - 1; j >= 0; j--)
+                            d += ` L${pts2[j][0].toFixed(1)},${pts2[j][1].toFixed(1)}`;
+                        d += " Z";
+                        const path = document.createElementNS(
+                            "http://www.w3.org/2000/svg",
+                            "path",
+                        );
+                        path.setAttribute("d", d);
+                        path.setAttribute("fill", color);
+                        path.setAttribute(
+                            "opacity",
+                            ((opacity / 100) * 0.7).toFixed(2),
+                        );
+                        path.setAttribute("stroke", "none");
+                        g.appendChild(path);
+                    }
+                } else {
+                    for (let i = 0; i < N; i++) {
+                        const pts = buildPath(W * 1.4, H, i, N);
+                        const d = ptsToPath(pts);
+                        const color = getLineColor(i / N, gradientMode);
+                        const path = document.createElementNS(
+                            "http://www.w3.org/2000/svg",
+                            "path",
+                        );
+                        path.setAttribute("d", d);
+                        path.setAttribute("fill", "none");
+                        path.setAttribute("stroke", color);
 
-      let sw=stroke;
-      if(taper==='fade'){sw=stroke*(0.3+0.7*(1-Math.abs(i/N-0.5)*2));}
-      else if(taper==='wave'){sw=stroke*(0.5+0.5*Math.sin(i/N*Math.PI*4));}
+                        let sw = stroke;
+                        if (taper === "fade") {
+                            sw =
+                                stroke *
+                                (0.3 + 0.7 * (1 - Math.abs(i / N - 0.5) * 2));
+                        } else if (taper === "wave") {
+                            sw =
+                                stroke *
+                                (0.5 + 0.5 * Math.sin((i / N) * Math.PI * 4));
+                        }
 
-      path.setAttribute('stroke-width',sw.toFixed(2));
-      path.setAttribute('opacity',opacityVal);
-      g.appendChild(path);
-    }
-  }
-  svg.appendChild(g);
-}
+                        path.setAttribute("stroke-width", sw.toFixed(2));
+                        path.setAttribute("opacity", opacityVal);
+                        g.appendChild(path);
+                    }
+                }
+                svg.appendChild(g);
+            }
 
-function bindRange(id,valId,key){
-  const el=document.getElementById(id);
-  const val=document.getElementById(valId);
-  el.value=state[key];
-  val.textContent=state[key];
-  el.addEventListener('input',()=>{
-    state[key]=+el.value;
-    val.textContent=el.value;
-    render();
-  });
-}
+            function bindRange(id, valId, key) {
+                const el = document.getElementById(id);
+                const val = document.getElementById(valId);
+                el.value = state[key];
+                val.textContent = state[key];
+                el.addEventListener("input", () => {
+                    state[key] = +el.value;
+                    val.textContent = el.value;
+                    render();
+                });
+            }
 
-function bindSelect(id,key,cb){
-  const el=document.getElementById(id);
-  el.value=state[key];
-  el.addEventListener('change',()=>{state[key]=el.value;if(cb)cb();render();});
-}
+            function bindSelect(id, key, cb) {
+                const el = document.getElementById(id);
+                el.value = state[key];
+                el.addEventListener("change", () => {
+                    state[key] = el.value;
+                    if (cb) cb();
+                    render();
+                });
+            }
 
-function bindColor(id,key){
-  const el=document.getElementById(id);
-  el.value=state[key];
-  el.addEventListener('input',()=>{state[key]=el.value;render();});
-}
+            function bindColor(id, key) {
+                const el = document.getElementById(id);
+                el.value = state[key];
+                el.addEventListener("input", () => {
+                    state[key] = el.value;
+                    render();
+                });
+            }
 
-bindRange('lines','linesValue','lines');
-bindRange('amp','ampValue','amp');
-bindRange('freq','freqValue','freq');
-bindRange('phase','phaseValue','phase');
-bindRange('rotation','rotValue','rotation');
-bindRange('stroke','strokeValue','stroke');
-bindRange('opacity','opacityValue','opacity');
-bindColor('lineColor','lineColor');
-bindColor('lineColor2','lineColor2');
-bindColor('bgColor','bgColor');
+            bindRange("lines", "linesValue", "lines");
+            bindRange("amp", "ampValue", "amp");
+            bindRange("freq", "freqValue", "freq");
+            bindRange("phase", "phaseValue", "phase");
+            bindRange("rotation", "rotValue", "rotation");
+            bindRange("stroke", "strokeValue", "stroke");
+            bindRange("opacity", "opacityValue", "opacity");
+            bindColor("lineColor", "lineColor");
+            bindColor("lineColor2", "lineColor2");
+            bindColor("bgColor", "bgColor");
 
-bindSelect('waveMode','waveMode');
-bindSelect('gradientMode','gradientMode');
-bindSelect('preset','preset',()=>{
-  const [W,H]=RESOLUTIONS[state.preset];
-  document.getElementById('resLabel').textContent=`${state.preset.toUpperCase()} · ${W}×${H}`;
-});
+            bindSelect("waveMode", "waveMode");
+            bindSelect("gradientMode", "gradientMode");
+            bindSelect("preset", "preset", () => {
+                const [W, H] = RESOLUTIONS[state.preset];
+                document.getElementById("resLabel").textContent =
+                    `${state.preset.toUpperCase()} · ${W}×${H}`;
+            });
 
-document.querySelectorAll('[data-style]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    state.style=btn.dataset.style;
-    document.querySelectorAll('[data-style]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  });
-});
+            document.querySelectorAll("[data-style]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    state.style = btn.dataset.style;
+                    document
+                        .querySelectorAll("[data-style]")
+                        .forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    render();
+                });
+            });
 
-document.querySelectorAll('[data-taper]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    state.taper=btn.dataset.taper;
-    document.querySelectorAll('[data-taper]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  });
-});
+            document.querySelectorAll("[data-taper]").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    state.taper = btn.dataset.taper;
+                    document
+                        .querySelectorAll("[data-taper]")
+                        .forEach((b) => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    render();
+                });
+            });
 
-document.querySelectorAll('.preset-card').forEach(card=>{
-  card.addEventListener('click',()=>{
-    const p=PRESETS_DATA[card.dataset.preset];
-    if(!p)return;
-    Object.assign(state,p);
-    document.querySelectorAll('.preset-card').forEach(c=>c.classList.remove('active'));
-    card.classList.add('active');
-    syncUI();
-    render();
-  });
-});
+            document.querySelectorAll(".preset-card").forEach((card) => {
+                card.addEventListener("click", () => {
+                    const p = PRESETS_DATA[card.dataset.preset];
+                    if (!p) return;
+                    Object.assign(state, p);
+                    document
+                        .querySelectorAll(".preset-card")
+                        .forEach((c) => c.classList.remove("active"));
+                    card.classList.add("active");
+                    syncUI();
+                    render();
+                });
+            });
 
-function syncUI(){
-  ['lines','amp','freq','phase','rotation','stroke','opacity'].forEach(k=>{
-    const el=document.getElementById(k);
-    const val=document.getElementById(k+'Value');
-    if(el){el.value=state[k];val.textContent=state[k];}
-  });
-  ['lineColor','lineColor2','bgColor'].forEach(k=>{
-    const el=document.getElementById(k);
-    if(el)el.value=state[k];
-  });
-  document.getElementById('waveMode').value=state.waveMode;
-  document.getElementById('gradientMode').value=state.gradientMode;
-  document.querySelectorAll('[data-style]').forEach(b=>b.classList.toggle('active',b.dataset.style===state.style));
-  document.querySelectorAll('[data-taper]').forEach(b=>b.classList.toggle('active',b.dataset.taper===state.taper));
-}
+            const VALUE_IDS = {
+                lines: "linesValue",
+                amp: "ampValue",
+                freq: "freqValue",
+                phase: "phaseValue",
+                rotation: "rotValue",
+                stroke: "strokeValue",
+                opacity: "opacityValue",
+            };
+            function syncUI() {
+                [
+                    "lines",
+                    "amp",
+                    "freq",
+                    "phase",
+                    "rotation",
+                    "stroke",
+                    "opacity",
+                ].forEach((k) => {
+                    const el = document.getElementById(k);
+                    const val = document.getElementById(VALUE_IDS[k]);
+                    if (el && val) {
+                        el.value = state[k];
+                        val.textContent = state[k];
+                    }
+                });
+                ["lineColor", "lineColor2", "bgColor"].forEach((k) => {
+                    const el = document.getElementById(k);
+                    if (el) el.value = state[k];
+                });
+                document.getElementById("waveMode").value = state.waveMode;
+                document.getElementById("gradientMode").value =
+                    state.gradientMode;
+                document
+                    .querySelectorAll("[data-style]")
+                    .forEach((b) =>
+                        b.classList.toggle(
+                            "active",
+                            b.dataset.style === state.style,
+                        ),
+                    );
+                document
+                    .querySelectorAll("[data-taper]")
+                    .forEach((b) =>
+                        b.classList.toggle(
+                            "active",
+                            b.dataset.taper === state.taper,
+                        ),
+                    );
+            }
 
-document.getElementById('randomize').addEventListener('click',()=>{
-  const modes=['sine','noise','lissajous','spiral','zigzag','ripple','interference'];
-  const styles=['stroke','ribbon','dots'];
-  const tapers=['none','fade','wave'];
-  const grads=['solid','linear','radial','depth'];
-  const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-  const rndHex=()=>'#'+[0,0,0].map(()=>Math.floor(Math.random()*200+20).toString(16).padStart(2,'0')).join('');
-  state.lines=rnd(15,80);state.amp=rnd(20,200);state.freq=rnd(2,20);
-  state.phase=rnd(0,100);state.rotation=rnd(-45,45);state.stroke=rnd(1,8);
-  state.opacity=rnd(60,100);state.waveMode=modes[rnd(0,modes.length-1)];
-  state.style=styles[rnd(0,styles.length-1)];state.taper=tapers[rnd(0,tapers.length-1)];
-  state.gradientMode=grads[rnd(0,grads.length-1)];
-  state.lineColor=rndHex();state.lineColor2=rndHex();state.bgColor=rndHex();
-  initNoise(256);
-  syncUI();
-  document.querySelectorAll('.preset-card').forEach(c=>c.classList.remove('active'));
-  render();
-});
+            document
+                .getElementById("randomize")
+                .addEventListener("click", () => {
+                    const modes = [
+                        "sine",
+                        "noise",
+                        "lissajous",
+                        "spiral",
+                        "zigzag",
+                        "ripple",
+                        "interference",
+                    ];
+                    const styles = ["stroke", "ribbon", "dots"];
+                    const tapers = ["none", "fade", "wave"];
+                    const grads = ["solid", "linear", "radial", "depth"];
+                    const rnd = (a, b) =>
+                        Math.floor(Math.random() * (b - a + 1)) + a;
+                    const rndHex = () =>
+                        "#" +
+                        [1, 2, 3]
+                            .map(() =>
+                                Math.floor(Math.random() * 200 + 20)
+                                    .toString(16)
+                                    .padStart(2, "0"),
+                            )
+                            .join("");
+                    state.lines = rnd(15, 80);
+                    state.amp = rnd(20, 200);
+                    state.freq = rnd(2, 20);
+                    state.phase = rnd(0, 100);
+                    state.rotation = rnd(-45, 45);
+                    state.stroke = rnd(1, 8);
+                    state.opacity = rnd(60, 100);
+                    state.waveMode = modes[rnd(0, modes.length - 1)];
+                    state.style = styles[rnd(0, styles.length - 1)];
+                    state.taper = tapers[rnd(0, tapers.length - 1)];
+                    state.gradientMode = grads[rnd(0, grads.length - 1)];
+                    state.lineColor = rndHex();
+                    state.lineColor2 = rndHex();
+                    state.bgColor = rndHex();
+                    state.noiseOffset = Math.random() * 100;
+                    initNoise(256);
+                    syncUI();
+                    document
+                        .querySelectorAll(".preset-card")
+                        .forEach((c) => c.classList.remove("active"));
+                    render();
+                });
 
-document.getElementById('shareBtn').addEventListener('click',()=>{
-  const params=new URLSearchParams(state);
-  const url=`${location.origin}${location.pathname}?${params}`;
-  navigator.clipboard.writeText(url).catch(()=>{});
-  const btn=document.getElementById('shareBtn');
-  btn.textContent='Copied!';setTimeout(()=>btn.textContent='Share URL',2000);
-});
+            document
+                .getElementById("shareBtn")
+                .addEventListener("click", () => {
+                    const params = new URLSearchParams(state);
+                    const url = `${location.origin}${location.pathname}?${params}`;
+                    navigator.clipboard.writeText(url).catch(() => {});
+                    const btn = document.getElementById("shareBtn");
+                    btn.textContent = "Copied!";
+                    setTimeout(() => (btn.textContent = "Share URL"), 2000);
+                });
 
-function getSVGString(){
-  const serializer=new XMLSerializer();
-  return serializer.serializeToString(svg);
-}
+            function getSVGString() {
+                const serializer = new XMLSerializer();
+                return serializer.serializeToString(svg);
+            }
 
-document.getElementById('downloadSVG').addEventListener('click',()=>{
-  const svgStr=getSVGString();
-  const blob=new Blob([svgStr],{type:'image/svg+xml'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='flowform.svg';a.click();
-  URL.revokeObjectURL(a.href);
-});
+            document
+                .getElementById("downloadSVG")
+                .addEventListener("click", () => {
+                    const svgStr = getSVGString();
+                    const blob = new Blob([svgStr], { type: "image/svg+xml" });
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "flowform.svg";
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                });
 
-document.getElementById('downloadPNG').addEventListener('click',()=>{
-  const [W,H]=RESOLUTIONS[state.preset];
-  const btn=document.getElementById('downloadPNG');
-  btn.textContent='Rendering…';btn.disabled=true;
-  const svgStr=getSVGString();
-  const blob=new Blob([svgStr],{type:'image/svg+xml'});
-  const url=URL.createObjectURL(blob);
-  const img=new Image();
-  img.onload=()=>{
-    const canvas=document.createElement('canvas');
-    canvas.width=W;canvas.height=H;
-    const ctx=canvas.getContext('2d');
-    ctx.drawImage(img,0,0,W,H);
-    canvas.toBlob(pngBlob=>{
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(pngBlob);
-      a.download=`flowform-${state.preset}.png`;a.click();
-      URL.revokeObjectURL(a.href);URL.revokeObjectURL(url);
-      btn.textContent='Export PNG';btn.disabled=false;
-    },'image/png');
-  };
-  img.onerror=()=>{btn.textContent='Export PNG';btn.disabled=false;};
-  img.src=url;
-});
+            document
+                .getElementById("downloadPNG")
+                .addEventListener("click", () => {
+                    const [W, H] = RESOLUTIONS[state.preset];
+                    const btn = document.getElementById("downloadPNG");
+                    btn.textContent = "Rendering…";
+                    btn.disabled = true;
+                    const svgStr = getSVGString();
+                    const blob = new Blob([svgStr], { type: "image/svg+xml" });
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = W;
+                        canvas.height = H;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, W, H);
+                        canvas.toBlob((pngBlob) => {
+                            const a = document.createElement("a");
+                            a.href = URL.createObjectURL(pngBlob);
+                            a.download = `flowform-${state.preset}.png`;
+                            a.click();
+                            URL.revokeObjectURL(a.href);
+                            URL.revokeObjectURL(url);
+                            btn.textContent = "Export PNG";
+                            btn.disabled = false;
+                        }, "image/png");
+                    };
+                    img.onerror = () => {
+                        btn.textContent = "Export PNG";
+                        btn.disabled = false;
+                    };
+                    img.src = url;
+                });
 
-document.getElementById('mobileToggle').addEventListener('click',()=>{
-  document.getElementById('sidebar').classList.toggle('open');
-});
+            document
+                .getElementById("mobileToggle")
+                .addEventListener("click", () => {
+                    document.getElementById("sidebar").classList.toggle("open");
+                });
 
-const params=new URLSearchParams(location.search);
-if(params.size>2){
-  params.forEach((v,k)=>{if(k in state)state[k]=isNaN(v)?v:+v;});
-  syncUI();
-}
+            const params = new URLSearchParams(location.search);
+            if (params.size > 2) {
+                params.forEach((v, k) => {
+                    if (k in state) state[k] = isNaN(v) ? v : +v;
+                });
+                syncUI();
+            }
 
-const [W0,H0]=RESOLUTIONS[state.preset];
-document.getElementById('resLabel').textContent=`4K UHD · ${W0}×${H0}`;
+            const [W0, H0] = RESOLUTIONS[state.preset];
+            document.getElementById("resLabel").textContent =
+                `4K UHD · ${W0}×${H0}`;
 
-render();
-</script>
-</body>
+            render();
+        </script>
+    </body>
 </html>
